@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+// 🔥 THÊM USING DIRECTIVES CHO POSTGRESQL
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 namespace DMS.Presentation
 {

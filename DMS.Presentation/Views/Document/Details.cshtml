@@ -1,0 +1,139 @@
+﻿@model DocumentDetailsViewModel
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Document Details</h3>
+
+    <div class="card shadow-sm p-4">
+        <dl class="row">
+            <dt class="col-sm-3">Name:</dt>
+            <dd class="col-sm-9">@Model.Name</dd>
+
+            <dt class="col-sm-3">Type:</dt>
+            <dd class="col-sm-9">@Model.FileType</dd>
+
+            <dt class="col-sm-3">Size:</dt>
+            <dd class="col-sm-9">@(Model.Size / 1024) KB</dd>
+
+            <dt class="col-sm-3">Added At:</dt>
+            <dd class="col-sm-9">@Model.AddedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+            <dt class="col-sm-3">Starred:</dt>
+            <dd class="col-sm-9">
+                @if (Model.IsStarred)
+                {
+                    <span class="text-warning">
+                        <i class="fas fa-star fa-lg"></i> <strong>Starred</strong>
+                    </span>
+                }
+                else
+                {
+                    <span class="text-muted">
+                        <i class="far fa-star fa-lg"></i> <em>Not starred</em>
+                    </span>
+                }
+            </dd>
+
+
+            <dt class="col-sm-3">Folder:</dt>
+            <dd class="col-sm-9">@Model.FolderName</dd>
+
+            <dt class="col-sm-3">File Path:</dt>
+            <dd class="col-sm-9">
+                <a href="~/@Model.FilePath" target="_blank" class="btn btn-sm btn-primary">
+                    <i class="fas fa-folder-open"></i> Open
+                </a>
+            </dd>
+        </dl>
+    </div>
+
+    <div class="mt-3">
+        <a asp-action="Index" asp-route-folderId="@Model.FolderId" class="btn btn-secondary">Back to Documents</a>
+    </div>
+</div>
+
+
+
+<style>
+
+    :root {
+        --color-page-bg: #f5f5f5;
+        --color-card-bg: #ffffff;
+        --color-text: #212529;
+        --color-text-muted: #6c757d;
+        --color-border: #e9ecef;
+        --color-primary-accent: #0d6efd;
+        --color-hover-bg: #f8f9fa;
+        --color-warning-light: #ffc107;
+    }
+
+    .dark-theme {
+        --color-page-bg: #121417;
+        --color-card-bg: #1c1f23;
+        --color-text: #e2e6ea;
+        --color-text-muted: #adb5bd;
+        --color-border: #3b4249;
+        --color-primary-accent: #66b3ff;
+        --color-hover-bg: #343a40;
+    }
+
+    .card {
+        background-color: var(--color-card-bg);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+    }
+
+    .text-primary {
+        color: var(--color-primary-accent) !important;
+    }
+
+    .text-warning {
+        color: var(--color-warning-light) !important;
+    }
+
+    .dark-theme .text-warning {
+        color: white !important;
+    }
+
+    .text-muted {
+        color: var(--color-text-muted) !important;
+    }
+
+    .card dt {
+        color: var(--color-text-muted);
+        font-weight: 500;
+    }
+    .card dd {
+        color: var(--color-text);
+        font-weight: 400;
+    }
+
+    .btn-primary {
+        background-color: var(--color-primary-accent);
+        border-color: var(--color-primary-accent);
+        color: white;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary {
+        background-color: var(--color-page-bg);
+        color: var(--color-text);
+        border-color: var(--color-border);
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--color-hover-bg);
+        color: var(--color-text);
+    }
+
+    .dark-theme .btn-secondary {
+        background-color: var(--color-card-bg); 
+        color: var(--color-text);
+        border-color: var(--color-border);
+    }
+
+    .dark-theme .btn-secondary:hover {
+        background-color: var(--color-hover-bg);
+    }
+</style>

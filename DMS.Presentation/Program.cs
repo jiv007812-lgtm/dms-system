@@ -23,22 +23,21 @@ namespace DMS.Presentation
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // 🔧 SỬA PHẦN NÀY ĐỂ HỖ TRỢ POSTGRESQL
+            // 🔧 SỬA PHẦN NÀY - ĐƠN GIẢN HÓA CHỈ DÙNG POSTGRESQL
             builder.Services.AddDbContext<DMSContext>(options =>
             {
                 var connectionString = builder.Configuration.GetConnectionString("defaultconn");
                 
-                if (string.IsNullOrEmpty(connectionString))
-                {
-                    options.UseLazyLoadingProxies().UseSqlite("Data Source=dms.db");
-                }
-                else if (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres"))
+                // CHỈ DÙNG POSTGRESQL CHO PRODUCTION
+                if (!string.IsNullOrEmpty(connectionString) && 
+                   (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres")))
                 {
                     options.UseLazyLoadingProxies().UseNpgsql(connectionString);
                 }
                 else
                 {
-                    options.UseLazyLoadingProxies().UseSqlServer(connectionString);
+                    // FALLBACK CHO DEVELOPMENT
+                    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("defaultconn"));
                 }
             });
 
@@ -71,7 +70,7 @@ namespace DMS.Presentation
 
             var app = builder.Build();
 
-            // 🔧 🔥 THÊM ĐOẠN NÀY - TỰ ĐỘNG MIGRATE DATABASE
+            // 🔧 TỰ ĐỘNG MIGRATE DATABASE
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;

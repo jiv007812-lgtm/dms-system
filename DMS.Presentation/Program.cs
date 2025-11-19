@@ -24,22 +24,23 @@ namespace DMS.Presentation
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // 🔥 SỬA LẠI - CHỈ ĐĂNG KÝ 1 DATABASE PROVIDER
+            // 🔥 SỬA TRIỆT ĐỂ - CHỈ DÙNG POSTGRESQL, KHÔNG CÓ FALLBACK
             var connectionString = builder.Configuration.GetConnectionString("defaultconn");
             
-            if (!string.IsNullOrEmpty(connectionString) && 
-               (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres")))
+            if (!string.IsNullOrEmpty(connectionString))
             {
-                // CHỈ DÙNG POSTGRESQL - KHÔNG CÓ ELSE
+                // LUÔN LUÔN DÙNG POSTGRESQL - KHÔNG KIỂM TRA CHUỖI
                 builder.Services.AddDbContext<DMSContext>(options =>
                     options.UseLazyLoadingProxies().UseNpgsql(connectionString));
-                Console.WriteLine("Using PostgreSQL database");
+                Console.WriteLine("✅ Using PostgreSQL database");
             }
             else
             {
-                // KHÔNG ĐĂNG KÝ DATABASE PROVIDER NÀO CẢ
-                // ĐỂ TRÁNH CONFLICT
-                Console.WriteLine("No database provider registered - using in-memory");
+                // KHÔNG ĐĂNG KÝ DATABASE NÀO CẢ - ĐỂ TRÁNH CONFLICT
+                Console.WriteLine("❌ No database connection string found");
+                // CÓ THỂ THÊM IN-MEMORY DATABASE NẾU CẦN
+                // builder.Services.AddDbContext<DMSContext>(options => 
+                //     options.UseInMemoryDatabase("InMemoryDMS"));
             }
 
             builder.Services.AddAutoMapper(op => op.AddProfile(typeof(MappingProfile)));
@@ -79,11 +80,11 @@ namespace DMS.Presentation
                 {
                     var context = services.GetRequiredService<DMSContext>();
                     context.Database.Migrate();
-                    Console.WriteLine("Database migrated successfully!");
+                    Console.WriteLine("✅ Database migrated successfully!");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Database migration: {ex.Message}");
+                    Console.WriteLine($"❌ Database migration failed: {ex.Message}");
                 }
             }
             

@@ -19,29 +19,28 @@ namespace DMS.Presentation
         {
             var builder = WebApplication.CreateBuilder(args);
             
-            // 🔧 SỬA Ở ĐÂY - THAY THẾ HOÀN TOÀN Kestrel configuration
             builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // 🔧 SỬA PHẦN NÀY - ĐƠN GIẢN HÓA CHỈ DÙNG POSTGRESQL
-            builder.Services.AddDbContext<DMSContext>(options =>
+            // 🔥 SỬA LẠI - CHỈ ĐĂNG KÝ 1 DATABASE PROVIDER
+            var connectionString = builder.Configuration.GetConnectionString("defaultconn");
+            
+            if (!string.IsNullOrEmpty(connectionString) && 
+               (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres")))
             {
-                var connectionString = builder.Configuration.GetConnectionString("defaultconn");
-                
-                // CHỈ DÙNG POSTGRESQL CHO PRODUCTION
-                if (!string.IsNullOrEmpty(connectionString) && 
-                   (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres")))
-                {
-                    options.UseLazyLoadingProxies().UseNpgsql(connectionString);
-                }
-                else
-                {
-                    // FALLBACK CHO DEVELOPMENT
-                    options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("defaultconn"));
-                }
-            });
+                // CHỈ DÙNG POSTGRESQL - KHÔNG CÓ ELSE
+                builder.Services.AddDbContext<DMSContext>(options =>
+                    options.UseLazyLoadingProxies().UseNpgsql(connectionString));
+                Console.WriteLine("Using PostgreSQL database");
+            }
+            else
+            {
+                // KHÔNG ĐĂNG KÝ DATABASE PROVIDER NÀO CẢ
+                // ĐỂ TRÁNH CONFLICT
+                Console.WriteLine("No database provider registered - using in-memory");
+            }
 
             builder.Services.AddAutoMapper(op => op.AddProfile(typeof(MappingProfile)));
 
@@ -72,19 +71,19 @@ namespace DMS.Presentation
 
             var app = builder.Build();
 
-            // 🔧 TỰ ĐỘNG MIGRATE DATABASE
+            // 🔧 TỰ ĐỘNG MIGRATE DATABASE - CHỈ KHI CÓ DATABASE
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 try
                 {
                     var context = services.GetRequiredService<DMSContext>();
-                    context.Database.Migrate(); // Tự động chạy migrations
+                    context.Database.Migrate();
                     Console.WriteLine("Database migrated successfully!");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Database migration failed: {ex.Message}");
+                    Console.WriteLine($"Database migration: {ex.Message}");
                 }
             }
             
@@ -92,18 +91,13 @@ namespace DMS.Presentation
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
             app.UseRouting();
-
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapStaticAssets();
-
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")

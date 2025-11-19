@@ -7,4 +7,6 @@ RUN dotnet publish "DMS.Presentation/DMS.Presentation.csproj" -c Release -o /app
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "DMS.Presentation.dll", "--urls=http://0.0.0.0:10000"]
+ENV ASPNETCORE_URLS=http://0.0.0.0:10000
+ENV ASPNETCORE_HTTPS_PORT=
+ENTRYPOINT ["dotnet", "DMS.Presentation.dll"]

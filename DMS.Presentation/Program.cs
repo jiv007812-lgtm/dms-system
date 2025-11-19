@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
 namespace DMS.Presentation
 {
     public class Program
@@ -22,9 +23,23 @@ namespace DMS.Presentation
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddDbContext<DMSContext>(op =>
+            // 🔧 SỬA PHẦN NÀY ĐỂ HỖ TRỢ POSTGRESQL
+            builder.Services.AddDbContext<DMSContext>(options =>
             {
-                op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("defaultconn"));
+                var connectionString = builder.Configuration.GetConnectionString("defaultconn");
+                
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    options.UseLazyLoadingProxies().UseSqlite("Data Source=dms.db");
+                }
+                else if (connectionString.Contains("PostgreSQL") || connectionString.Contains("postgres"))
+                {
+                    options.UseLazyLoadingProxies().UseNpgsql(connectionString);
+                }
+                else
+                {
+                    options.UseLazyLoadingProxies().UseSqlServer(connectionString);
+                }
             });
 
             builder.Services.AddAutoMapper(op => op.AddProfile(typeof(MappingProfile)));
@@ -44,7 +59,6 @@ namespace DMS.Presentation
             builder.Services.AddScoped<IDashBoardService, DashBoardService>();
             builder.Services.AddTransient<IEmailSender, EmailSender>();
 
-
             builder.Services.AddAuthentication().AddGoogle(options =>
             {
                 options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
@@ -56,6 +70,22 @@ namespace DMS.Presentation
             builder.Services.AddScoped<IStarredService, StarredService>();        
 
             var app = builder.Build();
+
+            // 🔧 🔥 THÊM ĐOẠN NÀY - TỰ ĐỘNG MIGRATE DATABASE
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    var context = services.GetRequiredService<DMSContext>();
+                    context.Database.Migrate(); // Tự động chạy migrations
+                    Console.WriteLine("Database migrated successfully!");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Database migration failed: {ex.Message}");
+                }
+            }
             
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

@@ -15,11 +15,9 @@ namespace DMS.Presentation
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            builder.WebHost.ConfigureKestrel(options =>
-            {
-                options.ListenAnyIP(5022); // HTTP port
-                options.ListenAnyIP(44389, listenOptions => listenOptions.UseHttps()); // HTTPS port
-            });
+            
+            // 🔧 SỬA Ở ĐÂY - THAY THẾ HOÀN TOÀN Kestrel configuration
+            builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();

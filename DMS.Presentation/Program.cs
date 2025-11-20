@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -13,30 +12,20 @@ if (!string.IsNullOrEmpty(connectionString))
     Console.WriteLine("✅ Database configured");
 }
 
-// 🔥 THÊM IDENTITY
-builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-{
-    options.SignIn.RequireConfirmedAccount = false;
-    options.Password.RequireDigit = false;
-    options.Password.RequiredLength = 4;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
-})
-.AddEntityFrameworkStores<DMS.Infrastructure.DataContext.DMSContext>();
-
-Console.WriteLine("✅ Identity configured");
+// 🚨 TẠM BỎ IDENTITY - CHỈ GIỮ DATABASE
+Console.WriteLine("ℹ️ Identity temporarily disabled");
 
 var app = builder.Build();
 
 app.UseRouting();
-app.UseAuthentication();  // 🔥 THÊM DÒNG NÀY
-app.UseAuthorization();   // 🔥 THÊM DÒNG NÀY
+// 🚨 TẠM BỎ AUTHENTICATION
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapGet("/", () => "DMS WITH IDENTITY WORKS! ✅");
-app.MapGet("/test-auth", () => "Authentication is working! 🔐");
+app.MapGet("/", () => "DMS DATABASE WORKS! ✅");
+app.MapGet("/test-db", () => "Database connection is ready! 🗄️");
 
-Console.WriteLine("🎉 Application with Identity started!");
+Console.WriteLine("🎉 Application with Database started!");
 
 app.Run();

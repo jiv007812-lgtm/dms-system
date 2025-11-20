@@ -7,9 +7,6 @@ using DMS.Service.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-// 🔥 THÊM USING DIRECTIVES CHO POSTGRESQL
-using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 namespace DMS.Presentation
 {
@@ -18,76 +15,49 @@ namespace DMS.Presentation
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            
+
             builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            // 🔥 SỬA TRIỆT ĐỂ - CHỈ DÙNG POSTGRESQL, KHÔNG CÓ FALLBACK
+            // 🔥 CHỈ DÙNG POSTGRESQL - KHÔNG CÓ SQL SERVER
             var connectionString = builder.Configuration.GetConnectionString("defaultconn");
-            
+
             if (!string.IsNullOrEmpty(connectionString))
             {
-                // LUÔN LUÔN DÙNG POSTGRESQL - KHÔNG KIỂM TRA CHUỖI
+                // LUÔN LUÔN DÙNG POSTGRESQL
                 builder.Services.AddDbContext<DMSContext>(options =>
                     options.UseLazyLoadingProxies().UseNpgsql(connectionString));
                 Console.WriteLine("✅ Using PostgreSQL database");
             }
             else
             {
-                // KHÔNG ĐĂNG KÝ DATABASE NÀO CẢ - ĐỂ TRÁNH CONFLICT
                 Console.WriteLine("❌ No database connection string found");
-                // CÓ THỂ THÊM IN-MEMORY DATABASE NẾU CẦN
-                // builder.Services.AddDbContext<DMSContext>(options => 
-                //     options.UseInMemoryDatabase("InMemoryDMS"));
             }
 
-            builder.Services.AddAutoMapper(op => op.AddProfile(typeof(MappingProfile)));
-
-            builder.Services.AddIdentity<AppUser, IdentityRole>(op=>
+            // 🔥 ĐẢM BẢO CHỈ CÓ 1 DB CONTEXT REGISTRATION
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
-                op.SignIn.RequireConfirmedEmail = true;
-            }).AddEntityFrameworkStores<DMSContext>().AddDefaultTokenProviders();
+                options.SignIn.RequireConfirmedAccount = false;
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+            })
+            .AddEntityFrameworkStores<DMSContext>()
+            .AddDefaultTokenProviders();
 
-            builder.Services.AddScoped<UnitOfWork>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddScoped<IRoleService, RoleService>();
-            builder.Services.AddScoped<IFolderService, FolderService>();
             builder.Services.AddScoped<IDocumentService, DocumentService>();
-            builder.Services.AddScoped<ISharingService, SharingService>();
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IDashBoardService, DashBoardService>();
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddAutoMapper(typeof(MapperProfile));
 
-            builder.Services.AddAuthentication().AddGoogle(options =>
-            {
-                options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-                options.CallbackPath = "/signin-google";
-            });
-
-            builder.Services.AddScoped<ITrashService, TrashService>();        
-            builder.Services.AddScoped<IStarredService, StarredService>();        
+            builder.Services.AddRazorPages();
 
             var app = builder.Build();
 
-            // 🔧 TỰ ĐỘNG MIGRATE DATABASE - CHỈ KHI CÓ DATABASE
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<DMSContext>();
-                    context.Database.Migrate();
-                    Console.WriteLine("✅ Database migrated successfully!");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ Database migration failed: {ex.Message}");
-                }
-            }
-            
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -95,9 +65,14 @@ namespace DMS.Presentation
                 app.UseHsts();
             }
 
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
             app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
+
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",

@@ -2,7 +2,6 @@ using DMS.Domain.Models;
 using DMS.Infrastructure.DataContext;
 using DMS.Infrastructure.UnitOfWorks;
 using DMS.Service.IService;
-using DMS.Service.MapperHelper;
 using DMS.Service.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +52,12 @@ namespace DMS.Presentation
             builder.Services.AddScoped<AccountService>(); 
             builder.Services.AddScoped<DocumentService>();
             
-            builder.Services.AddAutoMapper(typeof(MapperProfile));
+            // ✅ GIẢI PHÁP CHO LỖI MAPPERPROFILE
+            // Cách 1: Sử dụng Assembly - sẽ tìm tất cả Profile trong tất cả referenced assemblies
+            builder.Services.AddAutoMapper(typeof(Program).Assembly);
+            
+            // Hoặc Cách 2: Nếu biết chính xác assembly chứa MapperProfile
+            // builder.Services.AddAutoMapper(typeof(AccountService).Assembly);
 
             builder.Services.AddRazorPages();
 

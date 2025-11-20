@@ -1,31 +1,66 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🔥 PORT RENDER
+builder.WebHost.UseUrls("http://*:" + (Environment.GetEnvironmentVariable("PORT") ?? "10000"));
+
+// Services cơ bản
 builder.Services.AddControllersWithViews();
 
-// DATABASE
+// 🔥 DATABASE POSTGRESQL CHO RENDER
 var connectionString = builder.Configuration.GetConnectionString("defaultconn");
+Console.WriteLine($"🔍 Connection String: {connectionString}");
+
 if (!string.IsNullOrEmpty(connectionString))
 {
-    builder.Services.AddDbContext<DMS.Infrastructure.DataContext.DMSContext>(options =>
-        options.UseNpgsql(connectionString));
-    Console.WriteLine("✅ Database configured");
+    try
+    {
+        builder.Services.AddDbContext<DMS.Infrastructure.DataContext.DMSContext>(options =>
+            options.UseNpgsql(connectionString));
+        Console.WriteLine("✅ PostgreSQL database configured");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Database error: {ex.Message}");
+    }
 }
 
-// 🚨 TẠM BỎ IDENTITY - CHỈ GIỮ DATABASE
-Console.WriteLine("ℹ️ Identity temporarily disabled");
+// 🔥 IDENTITY ĐƠN GIẢN - DÙNG IdentityUser
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+})
+.AddEntityFrameworkStores<DMS.Infrastructure.DataContext.DMSContext>();
+
+Console.WriteLine("✅ Identity configured");
 
 var app = builder.Build();
 
+// LUÔN HIỆN LỖI CHI TIẾT
+app.UseDeveloperExceptionPage();
+
+app.UseStaticFiles();
 app.UseRouting();
-// 🚨 TẠM BỎ AUTHENTICATION
-// app.UseAuthentication();
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapGet("/", () => "DMS DATABASE WORKS! ✅");
-app.MapGet("/test-db", () => "Database connection is ready! 🗄️");
+// ROUTING ĐƠN GIẢN
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-Console.WriteLine("🎉 Application with Database started!");
+// TEST ENDPOINTS
+app.MapGet("/", () => "DMS SYSTEM IS WORKING! ✅");
+app.MapGet("/test", () => "TEST OK! 🎉");
+app.MapGet("/health", () => new { status = "OK", time = DateTime.Now });
+
+Console.WriteLine("🎉 Application started successfully!");
 
 app.Run();

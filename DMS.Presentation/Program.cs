@@ -1,86 +1,59 @@
-using DMS.Domain.Models;
-using DMS.Infrastructure.DataContext;
-using DMS.Infrastructure.UnitOfWorks;
-using DMS.Service.IService;
-using DMS.Service.Service;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
-namespace DMS.Presentation
+var builder = WebApplication.CreateBuilder(args);
+
+// 🔥 QUAN TRỌNG: Port Render
+builder.WebHost.UseUrls("http://*:" + Environment.GetEnvironmentVariable("PORT") ?? "10000");
+
+// Services cơ bản
+builder.Services.AddControllersWithViews();
+
+// 🔥 DATABASE - THỬ KHÔNG DÙNG LAZY LOADING
+var connectionString = builder.Configuration.GetConnectionString("defaultconn");
+Console.WriteLine($"🔍 Connection String: {connectionString}");
+
+if (!string.IsNullOrEmpty(connectionString))
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-
-            builder.WebHost.UseUrls("http://0.0.0.0:10000");
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-
-            // 🔥 CHỈ DÙNG POSTGRESQL - KHÔNG CÓ SQL SERVER
-            var connectionString = builder.Configuration.GetConnectionString("defaultconn");
-
-            if (!string.IsNullOrEmpty(connectionString))
-            {
-                // LUÔN LUÔN DÙNG POSTGRESQL
-                builder.Services.AddDbContext<DMSContext>(options =>
-                    options.UseLazyLoadingProxies().UseNpgsql(connectionString));
-                Console.WriteLine("✅ Using PostgreSQL database");
-            }
-            else
-            {
-                Console.WriteLine("❌ No database connection string found");
-            }
-
-            // 🔥 SỬA LỖI APPLICATIONUSER - DÙNG IDENTITYUSER
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
-            {
-                options.SignIn.RequireConfirmedAccount = false;
-                options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 6;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireLowercase = false;
-            })
-            .AddEntityFrameworkStores<DMSContext>()
-            .AddDefaultTokenProviders();
-
-            // 🔥 ĐĂNG KÝ TRỰC TIẾP CLASS - KHÔNG DÙNG INTERFACE
-            builder.Services.AddScoped<UnitOfWork>();
-            builder.Services.AddScoped<AccountService>(); 
-            builder.Services.AddScoped<DocumentService>();
-            
-            // 🚨 TẠM THỜI BỎ AUTOMAPPER - COMMENT DÒNG NÀY
-            // builder.Services.AddAutoMapper(typeof(Program).Assembly);
-
-            builder.Services.AddRazorPages();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (!app.Environment.IsDevelopment())
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseStaticFiles();
-
-            app.UseRouting();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.MapStaticAssets();
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
-
-            app.Run();
-        }
-    }
+    builder.Services.AddDbContext<DMSInfrastructure.DataContext.DMSContext>(options =>
+        options.UseNpgsql(connectionString)); // 🚨 BỎ UseLazyLoadingProxies()
+    Console.WriteLine("✅ PostgreSQL database configured");
 }
+
+// 🔥 IDENTITY ĐƠN GIẢN
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+})
+.AddEntityFrameworkStores<DMSInfrastructure.DataContext.DMSContext>();
+
+var app = builder.Build();
+
+// 🔥 LUÔN HIỆN LỖI CHI TIẾT
+app.UseDeveloperExceptionPage();
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// 🔥 ROUTING ĐƠN GIẢN
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// 🔥 TEST ENDPOINT
+app.MapGet("/", () => "DMS Application is running! ✅");
+app.MapGet("/test", () => Results.Json(new { status = "OK", message = "Server is working" }));
+app.MapGet("/health", () => Results.Json(new { status = "Healthy", timestamp = DateTime.UtcNow }));
+
+Console.WriteLine("🎉 Application started successfully on Render!");
+
+app.Run();

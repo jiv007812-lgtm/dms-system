@@ -4,23 +4,28 @@ using Microsoft.AspNetCore.Identity;
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔥 QUAN TRỌNG: Port Render
-builder.WebHost.UseUrls("http://*:" + Environment.GetEnvironmentVariable("PORT") ?? "10000");
+builder.WebHost.UseUrls("http://*:" + (Environment.GetEnvironmentVariable("PORT") ?? "10000"));
 
 // Services cơ bản
 builder.Services.AddControllersWithViews();
 
-// 🔥 DATABASE - THỬ KHÔNG DÙNG LAZY LOADING
+// 🔥 DATABASE - SỬA NAMESPACE ĐÚNG
 var connectionString = builder.Configuration.GetConnectionString("defaultconn");
 Console.WriteLine($"🔍 Connection String: {connectionString}");
 
 if (!string.IsNullOrEmpty(connectionString))
 {
-    builder.Services.AddDbContext<DMSInfrastructure.DataContext.DMSContext>(options =>
-        options.UseNpgsql(connectionString)); // 🚨 BỎ UseLazyLoadingProxies()
+    // SỬA NAMESPACE: DMS.Infrastructure.DataContext
+    builder.Services.AddDbContext<DMS.Infrastructure.DataContext.DMSContext>(options =>
+        options.UseNpgsql(connectionString));
     Console.WriteLine("✅ PostgreSQL database configured");
 }
+else
+{
+    Console.WriteLine("❌ No connection string found");
+}
 
-// 🔥 IDENTITY ĐƠN GIẢN
+// 🔥 IDENTITY - SỬA NAMESPACE ĐÚNG
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -30,7 +35,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
 })
-.AddEntityFrameworkStores<DMSInfrastructure.DataContext.DMSContext>();
+.AddEntityFrameworkStores<DMS.Infrastructure.DataContext.DMSContext>();
 
 var app = builder.Build();
 

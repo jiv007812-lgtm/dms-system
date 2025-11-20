@@ -1,4 +1,4 @@
-using DMS.Domain.Models; // Đảm bảo namespace này tồn tại
+using DMS.Domain.Models;
 using DMS.Infrastructure.DataContext;
 using DMS.Infrastructure.UnitOfWorks;
 using DMS.Service.IService;
@@ -35,7 +35,7 @@ namespace DMS.Presentation
                 Console.WriteLine("❌ No database connection string found");
             }
 
-            // 🔥 SỬA LỖI APPLICATIONUSER - DÙNG IDENTITYUSER NẾU ApplicationUser KHÔNG TỒN TẠI
+            // 🔥 SỬA LỖI APPLICATIONUSER - DÙNG IDENTITYUSER
             builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false;
@@ -48,11 +48,11 @@ namespace DMS.Presentation
             .AddEntityFrameworkStores<DMSContext>()
             .AddDefaultTokenProviders();
 
-            // 🔥 COMMENT CÁC SERVICE BỊ LỖI TẠM THỜI
-            // builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            // builder.Services.AddScoped<IAccountService, AccountService>();
-            // builder.Services.AddScoped<IDocumentService, DocumentService>();
-            // builder.Services.AddAutoMapper(typeof(MapperProfile));
+            // 🔥 BỎ COMMENT CÁC SERVICES - QUAN TRỌNG!
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddScoped<IDocumentService, DocumentService>();
+            builder.Services.AddAutoMapper(typeof(MapperProfile));
 
             builder.Services.AddRazorPages();
 

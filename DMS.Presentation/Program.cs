@@ -52,12 +52,8 @@ namespace DMS.Presentation
             builder.Services.AddScoped<AccountService>(); 
             builder.Services.AddScoped<DocumentService>();
             
-            // ✅ GIẢI PHÁP CHO LỖI MAPPERPROFILE
-            // Cách 1: Sử dụng Assembly - sẽ tìm tất cả Profile trong tất cả referenced assemblies
-            builder.Services.AddAutoMapper(typeof(Program).Assembly);
-            
-            // Hoặc Cách 2: Nếu biết chính xác assembly chứa MapperProfile
-            // builder.Services.AddAutoMapper(typeof(AccountService).Assembly);
+            // 🚨 TẠM THỜI BỎ AUTOMAPPER - COMMENT DÒNG NÀY
+            // builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
             builder.Services.AddRazorPages();
 

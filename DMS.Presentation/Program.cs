@@ -48,10 +48,11 @@ namespace DMS.Presentation
             .AddEntityFrameworkStores<DMSContext>()
             .AddDefaultTokenProviders();
 
-            // 🔥 BỎ COMMENT CÁC SERVICES - QUAN TRỌNG!
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddScoped<IAccountService, AccountService>();
-            builder.Services.AddScoped<IDocumentService, DocumentService>();
+            // 🔥 ĐĂNG KÝ TRỰC TIẾP CLASS - KHÔNG DÙNG INTERFACE
+            builder.Services.AddScoped<UnitOfWork>();
+            builder.Services.AddScoped<AccountService>(); 
+            builder.Services.AddScoped<DocumentService>();
+            
             builder.Services.AddAutoMapper(typeof(MapperProfile));
 
             builder.Services.AddRazorPages();

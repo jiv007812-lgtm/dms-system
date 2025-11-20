@@ -1,23 +1,19 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.EntityFrameworkCore;
 
-// Services tối thiểu
+var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
+// 🔥 THÊM DATABASE
+var connectionString = builder.Configuration.GetConnectionString("defaultconn");
+if (!string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddDbContext<DMS.Infrastructure.DataContext.DMSContext>(options =>
+        options.UseNpgsql(connectionString));
+    Console.WriteLine("✅ Database configured");
+}
+
 var app = builder.Build();
-
-// Basic configuration
 app.UseRouting();
-
-// Simple routes
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-// Test endpoints
-app.MapGet("/", () => "DMS SYSTEM IS WORKING! ✅");
-app.MapGet("/test", () => "TEST ENDPOINT WORKS! 🎉");
-app.MapGet("/health", () => new { status = "OK", time = DateTime.Now });
-
-Console.WriteLine("🚀 Application started!");
-
+app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapGet("/", () => "DMS WITH DATABASE WORKS! ✅");
 app.Run();
